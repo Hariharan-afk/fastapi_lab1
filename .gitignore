@@ -1,0 +1,12 @@
+# Virtual env
+fastapi_lab1_env/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+model/*.pkl
+model/*.joblib
