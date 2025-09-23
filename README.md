@@ -1,111 +1,179 @@
-## Digits Classifier
+# Digits Classifier
 
-In this Lab, we will learn how to expose ML models as APIs using [FastAPI](https://fastapi.tiangolo.com/) and [uvicorn](https://www.uvicorn.org/).
-1. **FastAPI**: FastAPI is a modern, fast (high-performance), web framework for building APIs with Python based on standard Python type hints.
-2. **uvicorn**: Uvicorn is an [Asynchronous Server Gateway Interface - ASGI](https://youtu.be/vKjCkeJGbNk) web server implementation for Python. It is often used to serve FastAPI aplications.
+In this lab, you’ll expose an ML model as a web API using **[FastAPI](https://fastapi.tiangolo.com/)** and **[Uvicorn](https://www.uvicorn.org/)**.
 
-The workflow involves the following steps:
-1. Training a Support Vector Machine(SVM) Classifier on Digits Dataset.
-2. Serving the trained model as an API using FastAPI and uvicorn.
+- **FastAPI**: a modern, high-performance web framework for building APIs in Python (built on type hints).
+- **Uvicorn**: an ASGI (Asynchronous Server Gateway Interface) web server commonly used to run FastAPI applications.
+
+**Workflow overview**
+1. Train a **Support Vector Machine (SVM)** classifier on scikit-learn’s **Digits** dataset (8×8 grayscale images, labels 0–9).
+2. Serve the trained model as an API using **FastAPI** and **Uvicorn**.
+
+---
 
 ## Project Structure
 
 ```
 FastAPI_Lab1/
 ├─ model/
-│ └─ digits_model.pkl # saved sklearn pipeline (created by training)
+│  └─ digits_model.pkl              # saved sklearn model/pipeline (created by training)
 ├─ src/
-│ ├─ init.py
-│ ├─ data.py # load_data(), split_data()
-│ ├─ train.py # fit_model() -> saves model/digits_model.pkl
-│ ├─ predict.py # predict_data(X) using the saved model
-│ └─ main.py # FastAPI app (health, predict, metrics, etc.)
+│  ├─ __init__.py
+│  ├─ data.py                       # load_data(), split_data()
+│  ├─ train.py                      # fit_model() -> saves model/digits_model.pkl
+│  ├─ predict.py                    # predict_data(X) using the saved model
+│  └─ main.py                       # FastAPI app (health, predict, metrics, etc.)
+├─ README.md
 └─ requirements.txt
 ```
 
-## Setting up the lab
+---
 
-1. Create a virtual environment(e.g. **fastapi_lab1_env**).
-2. Activate the environment and install the required packages using `pip install -r requirements.txt`.
+## Setting Up the Lab
 
-### Project structure
+1. **Create a virtual environment** (e.g., `fastapi_lab1_env`).
+2. **Activate** the environment and **install dependencies** with `pip install -r requirements.txt`.
 
-```
-mlops_labs
-└── fastapi_lab1
-    ├── assets/
-    ├── fastapi_lab1_env/
-    ├── model/
-    │   └── iris_model.pkl
-    ├── src/
-    │   ├── __init__.py
-    │   ├── data.py
-    │   ├── main.py
-    │   ├── predict.py
-    │   └── train.py
-    ├── README.md
-    └── requirements.txt
-```
+> **Note**: `fastapi[all]` in `requirements.txt` installs extra optional packages for FastAPI, including **uvicorn**.
 
-Note:
-- **fastapi[all]** in **requirements.txt** will install optional additional dependencies for fastapi which contains **uvicorn** too.
+---
 
 ## Running the Lab
 
-1. First step is to train a Support Vector Machine Classifier. To do this, move into **src/** folder with
-    ```bash
-    cd src
-    ```
-2. To train the Support Vector Machine Classifier, run:
-    ```bash
-    python train.py
-    ```
-3. To serve the trained model as an API, run:
-    ```bash
-    uvicorn app:main --reload
-    ```
-4. Testing endpoints - to view the documentation of your api model you can use [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) (or) [http://localhost:8000/docs](http://localhost:8000/docs) after you run you run your FastAPI app.
-    
-![API page](assets/Home.png)
-   
-You can also test out the results of your endpoints by interacting with them. Click on the dropdown button of your endpoint -> Try it out -> Fill the Request body -> Click on Execute button.
+```powershell
+# 1) Create and activate a virtual environment
+python -m venv fastapi_lab1_env
+fastapi_lab1_env\Scripts\activate
 
-![API response](assets/api_response.png)
+# 2) Install dependencies
+pip install -r requirements.txt
 
-- You can also use other tools like [Postman](https://www.postman.com/) for API testing.
+# 3) Train the model (creates model/digits_model.pkl)
+python -m src.train
 
-
-
-### FastAPI features
-
-1. **Request Body Reading**: When a client sends a request to a FastAPI endpoint, the request can include a body with data. For routes that expect data (commonly POST, PUT, or PATCH requests), this data is often in JSON format. FastAPI automatically reads the request body by checking the Content-Type header, which should be set to application/json for JSON payloads.
-2. **Data Conversion**: Once the request body is read, FastAPI utilizes Pydantic models to parse the JSON data. Pydantic attempts to construct an instance of the specified model using the data from the request body. During this instantiation, Pydantic converts the JSON data into the proper Python data types as declared in the model.
-    - For instance, if the JSON object has a field like petal_length with a value of "5.1" (a string), and the model expects a float, Pydantic will transform the string into a float. If conversion isn't possible (say, the value was "five point one"), Pydantic will raise a validation error.
-3. **Data Validation**: Pydantic checks that all required fields are present and that the values are of the correct type, adhering to any constraints defined in the model (such as string length or number range). If the validation passes, the endpoint has a verified Python object to work with. If validation fails (due to missing fields, incorrect types, or constraint violations), FastAPI responds with a 422 Unprocessable Entity status. This response includes a JSON body detailing the validation errors, aiding clients in correcting their request data.
-4. **Error Handling**: Error handling in FastAPI can be effectively managed using the HTTPException class. HTTPException is used to explicitly signal an HTTP error status code and return additional details about the error. When an HTTPException is raised within a route, FastAPI will catch the exception and use its content to form the HTTP response.
-- **Instantiation**: The HTTPException class is instantiated with at least two arguments: status_code and detail. The status_code argument is an integer that represents the HTTP status code (e.g., 404 for Not Found, 400 for Bad Request). The detail argument is a string or any JSON-encodable object that describes the error.
-- **Response**: When an HTTPException is raised, FastAPI sends an HTTP response with the status code specified. The detail provided in the HTTPException is sent as the body of the response in JSON format.
-
-```python
-from fastapi import FastAPI, HTTPException
-
-app = FastAPI()
-
-@app.get("/items/{item_id}")
-async def read_item(item_id: int):
-    item = get_item_by_id(item_id)  # Hypothetical function to fetch an item
-    if item is None:
-        raise HTTPException(status_code=404, detail=f"Item with ID {item_id} not found")
-    return item
+# 4) Run the API (use a free port like 8001 on Windows)
+uvicorn src.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-In this example, **get_item_by_id** is a function that retrieves an item based on its ID. If no item with the given ID is found, an HTTPException with a 404 Not Found status code is raised, and the detail message is customized to include the ID of the item that was not found.
+Now open the interactive docs at **http://127.0.0.1:8001/docs**.
 
-FastAPI will catch this exception and return a response with a 404 status code and a JSON body like this:
+![API page](assets/Home.png)
 
+You can test endpoints directly in the Swagger UI:  
+open an endpoint → **Try it out** → fill the request body → **Execute**.
+
+---
+
+## 📖 How the Code Works
+
+### 1) `src/data.py`
+- **`load_data()`** returns `(X, y)` for the **Digits** dataset.  
+  - `X.shape == (1797, 64)` (flattened 8×8 images)  
+  - `y.shape == (1797,)`, labels in `0..9`
+- **`split_data(X, y)`** returns `(X_train, X_test, y_train, y_test)` using a **70/30 split** and `random_state=12` (mirrors the original Iris lab).
+
+### 2) `src/train.py`
+- **`fit_model(X_train, y_train)`** trains a pipeline and saves it to `model/digits_model.pkl`:
+  - `StandardScaler()` → `SVC(kernel="rbf", C=3.0, gamma="scale", probability=True)`
+  - This combo typically achieves **~97–99% accuracy** on the Digits test split.
+- Run directly to (re)train:
+  ```powershell
+  python -m src.train
+  ```
+
+### 3) `src/predict.py`
+- **`predict_data(X)`** loads the saved model once (cached) and predicts labels for any `(n_samples, 64)` input.
+
+### 4) `src/main.py` (FastAPI)
+**Endpoints**
+- `GET /` – health check
+- `POST /predict` – classify a digit from a flattened 64-value pixel vector
+- `GET /dataset_info` – dataset stats (samples, features, classes)
+- `GET /sample/{i}` – return raw pixels + true label for a specific sample
+- `GET /metrics` – compute accuracy and confusion matrix on a held-out test split
+
+
+---
+
+## 🧪 Using the API
+
+### 1) Open the docs
+Navigate to **`/docs`** in your browser to try all endpoints.
+
+### 2) Get dataset info
+**Request**
+```
+GET /dataset_info
+```
+**Response**
+- Returns counts, feature shape, and class list.
+
+- Dataset info:  
+  ![Dataset Info](assets/dataset_info.png)
+
+### 3) Inspect a sample
+**Request**
+```
+GET /sample/{i}
+```
+
+**Response**
 ```json
 {
-    "detail": "Item with ID 1 not found"
+  "index": 779,
+  "label": 3,
+  "pixels_flat": [64 numbers...],
+  "pixels_8x8": [[8x8 grid...]]
 }
 ```
-- For more information on how to handle errors in FASTAPI refer to this [documentation](https://fastapi.tiangolo.com/tutorial/handling-errors/).
+- Sample endpoint:  
+  ![Sample](assets/sample_info.png)
+  
+### 4) Predict a digit
+Copy the `pixels_flat` array from `/sample/{i}` and send to `/predict`.
+
+**Request**
+```
+POST /predict
+Content-Type: application/json
+{
+  "pixels": [0, 1, 13, 16, 12, 1, 0, 0, ... 64 numbers total ...]
+}
+```
+
+**Response**
+```json
+{ "response": 3 }
+```
+
+**cURL example**
+```bash
+curl -X POST "http://127.0.0.1:8001/predict" \
+  -H "Content-Type: application/json" \
+  -d "{\"pixels\": [0,2,14,16,16,13,5,0,0,7,16,13,8,8,1,0,0,10,15,0,0,0,0,0,0,10,16,0,0,0,0,0,0,7,16,6,0,0,0,0,0,1,12,16,8,0,0,0,0,1,8,16,10,0,0,0,0,3,16,15,1,0,0,0]}"
+```
+- Predict (example):  
+  ![Predict #1](assets/prediction_1.png)
+  ![Predict #2](assets/prediction_2.png)
+### 5) View metrics
+**Request**
+```
+GET /metrics
+```
+**Response**
+- Returns test accuracy, class counts, and a confusion matrix.
+
+---
+- Metrics:  
+  ![Metrics](assets/metrics.png)
+## Tips & Notes
+
+- If port 8000 is blocked on Windows (e.g., `WinError 10013`), use a different port: `--port 8001`.
+- Your virtual environment prompt should show `(fastapi_lab1_env)` when active.
+- If you see Pydantic validation errors, remember we’re on **Pydantic v2**, so list length checks use:
+  ```py
+  Field(..., min_length=64, max_length=64)
+  ```
+
+---
+```
