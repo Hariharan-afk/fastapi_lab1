@@ -1,19 +1,27 @@
-
----
-- Video Explanation: [FastAPI lab](https://www.youtube.com/watch?v=KReburHqRIQ&list=PLcS4TrUUc53LeKBIyXAaERFKBJ3dvc9GZ&index=4)
-- Blog: [FastAPI Lab-1](https://www.mlwithramin.com/blog/fastapi-lab1)
-
----
-
-## Overview
+## Digits Classifier
 
 In this Lab, we will learn how to expose ML models as APIs using [FastAPI](https://fastapi.tiangolo.com/) and [uvicorn](https://www.uvicorn.org/).
 1. **FastAPI**: FastAPI is a modern, fast (high-performance), web framework for building APIs with Python based on standard Python type hints.
 2. **uvicorn**: Uvicorn is an [Asynchronous Server Gateway Interface - ASGI](https://youtu.be/vKjCkeJGbNk) web server implementation for Python. It is often used to serve FastAPI aplications.
 
 The workflow involves the following steps:
-1. Training a Decision Tree Classifier on Iris Dataset.
+1. Training a Support Vector Machine(SVM) Classifier on Digits Dataset.
 2. Serving the trained model as an API using FastAPI and uvicorn.
+
+## Project Structure
+
+```
+FastAPI_Lab1/
+├─ model/
+│ └─ digits_model.pkl # saved sklearn pipeline (created by training)
+├─ src/
+│ ├─ init.py
+│ ├─ data.py # load_data(), split_data()
+│ ├─ train.py # fit_model() -> saves model/digits_model.pkl
+│ ├─ predict.py # predict_data(X) using the saved model
+│ └─ main.py # FastAPI app (health, predict, metrics, etc.)
+└─ requirements.txt
+```
 
 ## Setting up the lab
 
@@ -44,11 +52,11 @@ Note:
 
 ## Running the Lab
 
-1. First step is to train a Decision Tree Classifier(Although you have **`model/iris_model.pkl`** when you cloned from the repo, let's create a new model). To do this, move into **src/** folder with
+1. First step is to train a Support Vector Machine Classifier. To do this, move into **src/** folder with
     ```bash
     cd src
     ```
-2. To train the Decision Tree Classifier, run:
+2. To train the Support Vector Machine Classifier, run:
     ```bash
     python train.py
     ```
@@ -66,54 +74,7 @@ You can also test out the results of your endpoints by interacting with them. Cl
 
 - You can also use other tools like [Postman](https://www.postman.com/) for API testing.
 
-### FastAPI Syntax
 
-- The instance of FASTAPI class can be defined as:
-    ```bash
-    app = FastAPI()
-     ```
-- When you run a FastAPI application, you often pass this app instance to an ASGI server uvicorn. The server then uses the app instance to handle incoming web requests and send responses based on the routes and logic you’ve defined in your FastAPI application.
-- To run a FastAPI application, run:
-    ```
-    uvicorn main:app --reload
-    ```
-- In this command, **main** is the name of the Python file containing your app instance (without the .py extension), and **app** is the name of the instance itself. The **--reload** flag tells uvicorn to restart the server whenever code changes are detected, which is useful during development and should not be used in production.
-- All the functions which should be used as API should be prefixed by **@app.get("/followed_by_endpoint_name")** or **@app.post("/followed_by_endpoint_name")**. This particular syntax is used to define route handlers (which function should handle an incoming request based on the URL and HTTP method), which are the functions responsible for responding to client requests to a given endpoint.
-    1. **Decorator (@)**: This symbol is used to define a decorator, which is a way to dynamically add functionality to functions or methods. In FastAPI, decorators are used to associate a function with a particular HTTP method and path.
-    2. **App Instance (app)**: This represents an instance of the FastAPI class. It is the core of your application and maintains the list of defined routes, request handlers, and other configurations.
-    3. **HTTP Method (get, post, etc.)**: The HTTP method specifies the type of HTTP request the route will respond to. For example, get is used for retrieving data, and post is used for sending data to the server. FastAPI provides a decorator for each standard HTTP method, such as @app.put, @app.delete, @app.patch, and @app.options, allowing you to define handlers for different types of client requests. For detailed info refer to this webiste by [Mdn](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods).
-    4. **Path/Endpoint ("/endpoint_name")**: This is the URL path where the API will be accessible. When a client makes a request to this path using the specified HTTP method, FastAPI will execute the associated function and return the response.
-- Using **async** in FastAPI allows for non-blocking operations, enabling the server to handle other requests while waiting for I/O tasks, like database queries or model loading, to complete. This leads to improved concurrency and resource utilization, enhancing the application's ability to manage multiple simultaneous requests efficiently.
-
-### Data Models in FastAPI
-
-##### 1. IrisData class
-
-```python
-class IrisData(BaseModel):
-    petal_length: float
-    sepal_length:float
-    petal_width:float
-    sepal_width:float
-```
-
-The **IrisData** class is a [Pydantic model](https://docs.pydantic.dev/latest/concepts/models/) which defines the expected structure of the data for a request body. When you use it as a type annotation for a route operation parameter, FastAPI will perform the following actions:
-- **Request Body Reading:** FastAPI will read the request body as JSON.
-- **Data Conversion:** It will convert the corresponding types, if necessary.
-- **Data Validation:** It will validate the data. If the data is invalid, it will return a 422 Unprocessable Entity error response with details about what was incorrect.
-
-#### 2. IrisResponse class
-
-```python
-class IrisResponse(BaseModel):
-    response:int
-```
-
-The **IrisResponse** class is another Pydantic model that defines the structure of the response data for an endpoint. When you specify **response_model=IrisResponse** in a route operation, it tells FastAPI to:
-- **Serialize the Output**: Convert the output data to JSON format according to the IrisResponse model.
-- **Document the API**: Include the IrisResponse model in the generated API documentation, so API consumers know what to expect in the response.
-
----
 
 ### FastAPI features
 
